@@ -1,13 +1,6 @@
 from gymnasium.envs.registration import register
 
 register(
-    id="GoTo-v0",
-    entry_point="envs.ssl_goto:SSLGoToStrat",
-    kwargs={"stratified": False},
-    max_episode_steps=1200,
-)
-
-register(
     id="PathPlanning-v0",
     entry_point="envs.baseline:SSLPathPlanningBaseLineEnv",
     kwargs={"field_type": 2, "n_robots_yellow": 0},

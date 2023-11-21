@@ -13,9 +13,8 @@ from utils.experiment import make_env, parse_args, setup_run
 
 
 def train(args, exp_name, wandb_run, artifact):
-    envs = gym.vector.SyncVectorEnv(
-        [make_env(args.gym_id, args.seed, 0, args.capture_video, exp_name)]
-        * args.num_envs
+    envs = gym.vector.AsyncVectorEnv(
+        [make_env(args, i, exp_name) for i in range(args.num_envs)]
     )
     agent = SAC(args, envs.single_observation_space, envs.single_action_space)
 
@@ -31,21 +30,17 @@ def train(args, exp_name, wandb_run, artifact):
             actions = agent.get_action(obs)
         next_obs, rewards, terminations, truncations, infos = envs.step(actions)
 
-        keys_to_log = [x for x in infos[0].keys() if x.startswith("reward_")]
-        valuable_infos = {key: [] for key in keys_to_log}
-
         if "final_info" in infos:
             for info in infos["final_info"]:
-                for key in keys_to_log:
-                    valuable_infos[key].append(info[key])
-            for key in keys_to_log:
-                log[f"ep_info/{key.replace('reward_', '')}"] = np.mean(
-                    valuable_infos[key]
-                )
-                print(
-                    f"global_step={global_step}, episodic_return={np.mean(valuable_infos['reward_total'])}"
-                )
-        
+                if info:
+                    print(
+                        f"global_step={global_step}, episodic_return={info['reward_total']}"
+                    )
+                    keys_to_log = [x for x in info.keys() if x.startswith("reward_")]
+                    for key in keys_to_log:
+                        log[f"ep_info/{key.replace('reward_', '')}"] = info[key]
+                    break
+
         # TRY NOT TO MODIFY: save data to reply buffer; handle `terminal_observation`
         real_next_obs = next_obs.copy()
         for idx, trunc in enumerate(truncations):
