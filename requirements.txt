@@ -1,3 +1,4 @@
 torch==2.0.0
 rsoccer_gym==git+https://github.com/robocin/rSoccer/tree/gymnasium
-wandb
+wandb>=0.16.0
+pyvirtualdisplay>=3.0
