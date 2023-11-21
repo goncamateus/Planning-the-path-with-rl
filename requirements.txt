@@ -1,0 +1,3 @@
+torch==2.0.0
+rsoccer_gym==git+https://github.com/robocin/rSoccer/tree/gymnasium
+wandb
