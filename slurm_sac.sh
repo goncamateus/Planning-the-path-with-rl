@@ -8,9 +8,8 @@
 #SBATCH --mail-user=mgm4@cin.ufpe.br
 
 # Load modules and activate python environment
-ENV_NAME = $1
 module load Python3.10 Xvfb freeglut glew
-source $HOME/doc/Planning-the-path-with-rl/$ENV_NAME/bin/activate
-
+source $HOME/doc/$1/bin/activate
+which python
 # Run the script
 python train_sac.py --cuda --gym-id $2 --track --capture-video
