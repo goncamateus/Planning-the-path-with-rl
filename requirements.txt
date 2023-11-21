@@ -1,4 +1,4 @@
 torch==2.0.0
-git+https://github.com/robocin/rSoccer.git@gymnasium#egg=rsoccer_gym
+git+https://github.com/goncamateus/rSoccer.git@dev#egg=rsoccer_gym
 wandb>=0.16.0
 pyvirtualdisplay>=3.0
