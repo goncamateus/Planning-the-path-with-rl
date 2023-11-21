@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-import gym
+import gymnasium as gym
 import numpy as np
 import pygame
 
@@ -63,12 +63,14 @@ class SSLPathPlanningEnv(SSLBaseEnv):
         field_type=1,
         n_robots_yellow=0,
         repeat_action=1,
+        render_mode=None,
     ):
         super().__init__(
             field_type=field_type,
             n_robots_blue=1,
             n_robots_yellow=n_robots_yellow,
             time_step=0.025,
+            render_mode=render_mode,
         )
 
         self.action_space = gym.spaces.Box(
@@ -202,8 +204,9 @@ class SSLPathPlanningEnv(SSLBaseEnv):
         observation = self._frame_to_observations()
         reward, done = self._calculate_reward_and_done()
         self.last_action = action
-
-        return observation, reward, done, self.reward_info
+        if self.render_mode == "human":
+            self.render()
+        return observation, reward, done, False, self.reward_info
 
     def _dist_reward(self):
         action_target_x = self.actual_action[0] * self.field.length / 2
@@ -420,9 +423,16 @@ class SSLPathPlanningEnv(SSLBaseEnv):
 class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
     """The SSL robot needs to reach the target point with a given angle"""
 
-    def __init__(self, n_robots_yellow=1):
+    def __init__(
+        self,
+        n_robots_yellow=1,
+        render_mode=None,
+    ):
         super().__init__(
-            n_robots_yellow=n_robots_yellow, field_type=2, repeat_action=16
+            n_robots_yellow=n_robots_yellow,
+            field_type=2,
+            repeat_action=16,
+            render_mode=render_mode,
         )
 
     def _frame_to_observations(self):

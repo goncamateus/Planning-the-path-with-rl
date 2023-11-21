@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-import gym
+import gymnasium as gym
 import numpy as np
 import pygame
 
@@ -58,16 +58,13 @@ def colorize(
 class SSLPathPlanningBaseLineEnv(SSLBaseEnv):
     """The SSL robot needs to reach the target point with a given angle"""
 
-    def __init__(
-        self,
-        field_type=1,
-        n_robots_yellow=0,
-    ):
+    def __init__(self, field_type=1, n_robots_yellow=0, render_mode=None):
         super().__init__(
             field_type=field_type,
             n_robots_blue=1,
             n_robots_yellow=n_robots_yellow,
             time_step=0.025,
+            render_mode=render_mode,
         )
 
         self.action_space = gym.spaces.Box(
@@ -181,25 +178,12 @@ class SSLPathPlanningBaseLineEnv(SSLBaseEnv):
 
     def step(self, action):
         self.actual_action = action
-        self.steps += 1
-        # Join agent action with environment actions
-        commands: List[Robot] = self._get_commands(action)
-        # Send command to simulator
-        self.rsim.send_commands(commands)
-        self.sent_commands = commands
-
-        # Get Frame from simulator
-        self.last_frame = self.frame
-        self.frame = self.rsim.get_frame()
+        observation, reward, terminated, truncated, _ = super().step(action)
         self.robot_path.append(
             (self.frame.robots_blue[0].x, self.frame.robots_blue[0].y)
         )
-        # Calculate environment observation, reward and done condition
-        observation = self._frame_to_observations()
-        reward, done = self._calculate_reward_and_done()
         self.last_action = action
-
-        return observation, reward, done, self.reward_info
+        return observation, reward, terminated, truncated, self.reward_info
 
     def _dist_reward(self):
         robot = self.frame.robots_blue[0]

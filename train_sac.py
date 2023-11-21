@@ -14,7 +14,7 @@ from utils.experiment import make_env, parse_args, setup_run
 
 def train(args, exp_name, wandb_run, artifact):
     envs = gym.vector.SyncVectorEnv(
-        [make_env(args.env_id, args.seed, 0, args.capture_video, exp_name)]
+        [make_env(args.gym_id, args.seed, 0, args.capture_video, exp_name)]
         * args.num_envs
     )
     agent = SAC(args, envs.single_observation_space, envs.single_action_space)
