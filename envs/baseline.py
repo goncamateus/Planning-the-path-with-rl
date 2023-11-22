@@ -239,12 +239,9 @@ class SSLPathPlanningBaseLineEnv(SSLBaseEnv):
 
         if done or self.steps >= 1200:
             # pairwise distance between all actions
-            action_var = 0
-            for i in range(len(self.all_actions)):
-                for j in range(i + 1, len(self.all_actions)):
-                    action_var += np.linalg.norm(
-                        np.array(self.all_actions[i]) - np.array(self.all_actions[j])
-                    )
+            action_var = np.linalg.norm(
+                np.array(self.all_actions[1:]) - np.array(self.all_actions[:-1])
+            )
             self.reward_info["reward_action_var"] = action_var
 
         self.reward_info["reward_dist"] += dist_reward
