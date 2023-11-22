@@ -1,15 +1,15 @@
 {
-    "PathPlanning-v0":{
+    "Baseline-v0":{
         "num_envs": 16,
         "total_timesteps": 150000
     },
 
-    "PathPlanning-v1":{
+    "Enhanced-v1":{
         "num_envs": 16,
         "total_timesteps": 150000
     },
 
-    "PathPlanning-v2":{
+    "Enhanced-v2":{
         "num_envs": 16,
         "total_timesteps": 150000,
         "autotune": false,
@@ -18,7 +18,7 @@
         "caps_epsilon": 0.05
     },
 
-    "PathPlanningMedium-v0":{
+    "Obstacles-v0":{
         "num_envs": 16,
         "total_timesteps": 500000,
         "autotune": false,

@@ -4,37 +4,25 @@ import gymnasium as gym
 import numpy as np
 import pygame
 
+from envs.navigation import *
+from gymnasium.utils.colorize import colorize
 from rsoccer_gym.Entities import Ball, Frame, Robot
 from rsoccer_gym.Render import COLORS
-from rsoccer_gym.ssl.ssl_gym_base import SSLBaseEnv
 from rsoccer_gym.Utils import KDTree
-
-from envs.navigation import *
-
-# The idea is to create an environment where the agent gives a trajectory to a certain target
-# The trajectory is defined by a list of points bounded by the field
-# The robot has to go from one point to the next one according to the navigation algorithm
-# The robot has to follow the trajectory in order
-# The episode has only one action which is trajectory
-# The reward will measure if each point of the trajectory is progressive to the target
-# The reward will measure if the trajectory is continuous
+from envs.enhanced import DIST_TOLERANCE, SSLPathPlanningEnv
 
 
-class TrajectoryEnv(SSLBaseEnv):
+class TrajectoryEnv(SSLPathPlanningEnv):
     def __init__(
         self,
-        field_type: int,
-        n_robots_blue: int,
-        n_robots_yellow: int,
-        time_step: float,
+        field_type=1,
+        n_robots_yellow=0,
         render_mode=None,
     ):
-        super().__init__(
-            field_type, n_robots_blue, n_robots_yellow, time_step, render_mode
-        )
+        super().__init__(field_type, 1, n_robots_yellow, render_mode)
 
+        self._target = np.array([0, 0])
         self._trajectory = []
-        self._trajectory_index = 0
         self._trajectory_size = 40
         self.reward_info = {
             "reward_dist": 0,
@@ -43,18 +31,19 @@ class TrajectoryEnv(SSLBaseEnv):
             "reward_objective": 0,
             "reward_total": 0,
         }
+        self.all_frames = []
 
     def _calculate_reward_dist(self, trajectory: np.ndarray, target: np.ndarray):
         distances = np.linalg.norm(trajectory - target, axis=1)
         my_arr = np.zeros(len(distances - 1))
         for i in range(len(distances) - 1):
             transition = distances[i] - distances[i + 1]
-            if transition < -0.05:
+            if transition < -DIST_TOLERANCE:
                 if i == 0:
                     my_arr[i] = 1
                 else:
                     my_arr[i] = my_arr[i - 1] + 1
-            if transition >= 0.05:
+            if transition >= DIST_TOLERANCE:
                 if i == 0:
                     my_arr[i] = -1
                 else:
@@ -63,7 +52,7 @@ class TrajectoryEnv(SSLBaseEnv):
                     else:
                         my_arr[i] = my_arr[i - 1] - 1
 
-            if transition >= -0.05 and transition < 0.05:
+            if transition >= -DIST_TOLERANCE and transition < DIST_TOLERANCE:
                 if i == 0:
                     my_arr[i] = 0
                 else:
@@ -80,6 +69,103 @@ class TrajectoryEnv(SSLBaseEnv):
         dot_in_range = (pairwise_dot > 0).astype(int)
         return np.sum(dot_in_range) / np.arange(self._trajectory_size - 1).sum()
 
-    def _calculate_reward_action_var(self, trajectory: np.ndarray):
+    def _calculate_reward_objective(self, trajectory: np.ndarray, target: np.ndarray):
+        dist_to_target = np.linalg.norm(trajectory[-1] - target)
+        reward = -dist_to_target if dist_to_target > DIST_TOLERANCE else 10
+        print(colorize("GOAL!", "green", bold=True, highlight=True))
+        return reward
+
+    def _calculate_action_var(self, trajectory: np.ndarray):
         distances = np.linalg.norm(trajectory[1:] - trajectory[:-1], axis=1)
         return np.sum(distances)
+
+    def _calculate_reward_and_done(self):
+        reward_dist = self._calculate_reward_dist(self._trajectory, self._target)
+        reward_continuity = self._calculate_reward_continuity(self._trajectory)
+        reward_objective = self._calculate_reward_objective(
+            self._trajectory, self._target
+        )
+        action_var = self._calculate_action_var(self._trajectory)
+        self.reward_info["reward_dist"] += reward_dist
+        self.reward_info["reward_continuity"] += reward_continuity
+        self.reward_info["reward_objective"] += reward_objective
+        self.reward_info["reward_action_var"] += action_var
+
+        reward = reward_dist + reward_continuity + reward_objective
+        self.reward_info["reward_total"] += reward
+
+        return reward, True
+
+    def step(self, actions):
+        field_half_length = self.field.length / 2  # x
+        field_half_width = self.field.width / 2  # y
+        self._trajectory = actions.copy()
+        self._trajectory[:, 0] *= field_half_length
+        self._trajectory[:, 1] *= field_half_width
+        reward, done = self._calculate_reward_and_done()
+
+        # This part is a plus, it allows to see the robot moving
+        for action in range(actions):
+            robot = self.frame.robots_blue[0]
+            robot_pos = np.array([robot.x, robot.y])
+            robot_to_action = np.linalg.norm(robot_pos - action)
+            while robot_to_action < DIST_TOLERANCE:
+                commands = self._get_commands(action)
+                self.rsim.send_commands(commands)
+                self.sent_commands = commands
+
+                self.last_frame = self.frame
+                self.frame = self.rsim.get_frame()
+                self.all_frames.append(self.frame)
+
+                robot = self.frame.robots_blue[0]
+                robot_pos = np.array([robot.x, robot.y])
+                robot_to_action = np.linalg.norm(robot_pos - action)
+
+        observation = self._frame_to_observations()
+        if self.render_mode == "human":
+            self.render()
+
+        return observation, reward, done, False, self.reward_info
+
+    def render(self) -> None:
+        """
+        Renders the game depending on
+        ball's and players' positions.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        """
+
+        if self.window_surface is None:
+            pygame.init()
+
+            if self.render_mode == "human":
+                pygame.display.init()
+                pygame.display.set_caption("SSL Environment")
+                self.window_surface = pygame.display.set_mode(self.window_size)
+            elif self.render_mode == "rgb_array":
+                self.window_surface = pygame.Surface(self.window_size)
+
+        assert (
+            self.window_surface is not None
+        ), "Something went wrong with pygame. This should never happen."
+
+        if self.clock is None:
+            self.clock = pygame.time.Clock()
+        self._render()
+        if self.render_mode == "human":
+            pygame.event.pump()
+            pygame.display.update()
+            self.clock.tick(self.metadata["render_fps"])
+        elif self.render_mode == "rgb_array":
+            return np.transpose(
+                np.array(pygame.surfarray.pixels3d(self.window_surface)), axes=(1, 0, 2)
+            )
+        
