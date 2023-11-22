@@ -111,6 +111,10 @@ class SSLPathPlanningEnv(SSLBaseEnv):
         self.repeat_action = repeat_action
         self.action_color = COLORS["PINK"]
         self.robot_path = []
+        FPS = 120
+        if self.repeat_action > 1:
+            FPS = np.ceil((1200//self.repeat_action)/10)
+        self.metadata["render_fps"] = FPS
 
         print("Environment initialized")
 
