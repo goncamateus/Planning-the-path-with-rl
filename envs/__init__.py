@@ -23,7 +23,7 @@ register(
 
 register(
     id="Obstacle-v0",
-    entry_point="envs.enhanced:SSLPathPlanningMediumEnv",
+    entry_point="envs.obstacles:SSLPathPlanningMediumEnv",
     kwargs={"n_robots_yellow": 1},
     max_episode_steps=75,
 )

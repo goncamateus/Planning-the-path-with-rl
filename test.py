@@ -16,13 +16,13 @@ def load_model(model_path):
 def main():
     _display = Display(visible=0, size=(1400, 900))
     _display.start()
-    env = gym.make("Enhanced-v0", render_mode="rgb_array")
+    env = gym.make("Obstacle-v0", render_mode="rgb_array")
     env = gym.wrappers.RecordVideo(
         env,
         f"monitor/caps",
         episode_trigger=lambda x: True,
     )
-    state_dict = load_model("models/PathPlanning-v0_1700600654/actor.pt")
+    state_dict = load_model("models/PathPlanningMedium-v0_1700604268/actor.pt")
     num_inputs = np.array(env.observation_space.shape).prod()
     num_actions = np.array(env.action_space.shape).prod()
     actor = GaussianPolicy(
