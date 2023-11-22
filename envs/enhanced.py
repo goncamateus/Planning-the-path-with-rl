@@ -5,54 +5,17 @@ import gymnasium as gym
 import numpy as np
 import pygame
 
+from envs.navigation import *
+from gymnasium.utils.colorize import colorize
 from rsoccer_gym.Entities import Ball, Frame, Robot
 from rsoccer_gym.Render import COLORS
 from rsoccer_gym.ssl.ssl_gym_base import SSLBaseEnv
 from rsoccer_gym.Utils import KDTree
 
-from envs.navigation import *
-
 ANGLE_TOLERANCE: float = np.deg2rad(5)  # 5 degrees
 SPEED_MIN_TOLERANCE: float = 0.05  # m/s == 5 cm/s
 SPEED_MAX_TOLERANCE: float = 0.3  # m/s == 30 cm/s
 DIST_TOLERANCE: float = 0.05  # m == 5 cm
-
-color2num = dict(
-    gray=30,
-    red=31,
-    green=32,
-    yellow=33,
-    blue=34,
-    magenta=35,
-    cyan=36,
-    white=37,
-    crimson=38,
-)
-
-
-def colorize(
-    string: str, color: str, bold: bool = False, highlight: bool = False
-) -> str:
-    """Returns string surrounded by appropriate terminal colour codes to print colourised text.
-
-    Args:
-        string: The message to colourise
-        color: Literal values are gray, red, green, yellow, blue, magenta, cyan, white, crimson
-        bold: If to bold the string
-        highlight: If to highlight the string
-
-    Returns:
-        Colourised string
-    """
-    attr = []
-    num = color2num[color]
-    if highlight:
-        num += 10
-    attr.append(str(num))
-    if bold:
-        attr.append("1")
-    attrs = ";".join(attr)
-    return f"\x1b[{attrs}m{string}\x1b[0m"
 
 
 class SSLPathPlanningEnv(SSLBaseEnv):
