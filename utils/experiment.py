@@ -1,13 +1,15 @@
 import argparse
-import envs
-import gymnasium as gym
 import json
 import os
-import numpy as np
 import random
-import torch
 import time
+
+import gymnasium as gym
+import numpy as np
+import torch
 import wandb
+
+import envs
 
 from distutils.util import strtobool
 

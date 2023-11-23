@@ -1,15 +1,20 @@
 # Created by: Mateus Gonçalves Machado
 # Based on: https://docs.cleanrl.dev/ (by Shengyi Huang)
 
-import envs
+import time
+
 import gymnasium as gym
 import numpy as np
-import time
 import wandb
 
-from methods.sac import SAC
+import envs
+
 from pyvirtualdisplay import Display
-from utils.experiment import make_env, parse_args, setup_run
+
+from methods.sac import SAC
+from utils.experiment import make_env
+from utils.experiment import parse_args
+from utils.experiment import setup_run
 
 
 def train(args, exp_name, wandb_run, artifact):

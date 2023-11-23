@@ -2,10 +2,11 @@ import gymnasium as gym
 import numpy as np
 import pygame
 
+from gymnasium.utils.colorize import colorize
+
 from envs.enhanced import COLORS
 from envs.enhanced import DIST_TOLERANCE
 from envs.enhanced import SSLPathPlanningEnv
-from gymnasium.utils.colorize import colorize
 
 
 class TrajectoryEnv(SSLPathPlanningEnv):

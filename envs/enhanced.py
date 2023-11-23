@@ -1,16 +1,24 @@
 import random
-from typing import List
 
 import gymnasium as gym
 import numpy as np
 import pygame
 
-from envs.navigation import *
 from gymnasium.utils.colorize import colorize
-from rsoccer_gym.Entities import Ball, Frame, Robot
+from rsoccer_gym.Entities import Ball
+from rsoccer_gym.Entities import Frame
+from rsoccer_gym.Entities import Robot
 from rsoccer_gym.Render import COLORS
 from rsoccer_gym.ssl.ssl_gym_base import SSLBaseEnv
 from rsoccer_gym.Utils import KDTree
+
+from envs.navigation import abs_smallest_angle_diff
+from envs.navigation import dist_to
+from envs.navigation import go_to_point_new
+from envs.navigation import GoToPointEntryNew
+from envs.navigation import MAX_VELOCITY
+from envs.navigation import Point2D
+
 
 ANGLE_TOLERANCE: float = np.deg2rad(5)  # 5 degrees
 SPEED_MIN_TOLERANCE: float = 0.05  # m/s == 5 cm/s
@@ -156,7 +164,7 @@ class SSLPathPlanningEnv(SSLBaseEnv):
         for _ in range(self.repeat_action):
             self.steps += 1
             # Join agent action with environment actions
-            commands: List[Robot] = self._get_commands(action)
+            commands = self._get_commands(action)
             # Send command to simulator
             self.rsim.send_commands(commands)
             self.sent_commands = commands

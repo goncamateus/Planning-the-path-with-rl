@@ -1,7 +1,8 @@
+from copy import deepcopy
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
-from copy import deepcopy
 
 
 class Actor(nn.Module):

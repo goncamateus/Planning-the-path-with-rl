@@ -5,9 +5,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils.buffer import ReplayBuffer
+
 from torch.distributions import Normal
 from torch.optim import Adam
+
+from utils.buffer import ReplayBuffer
 
 
 # Initialize Policy weights
