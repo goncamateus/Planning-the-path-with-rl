@@ -24,7 +24,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         self._trajectory = []
         self._trajectory_idx = 0
         self.action_space = gym.spaces.Box(
-            low=-1, high=1, shape=(self._trajectory_size, 2), dtype=np.float32
+            low=-1, high=1, shape=(self._trajectory_size * 2,), dtype=np.float32
         )
 
         self.reward_info = {
@@ -100,6 +100,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         return reward, True
 
     def step(self, actions: np.ndarray):
+        actions = actions.reshape(-1, 2)
         field_half_length = self.field.length / 2  # x
         field_half_width = self.field.width / 2  # y
         self._trajectory = actions.copy()
@@ -107,26 +108,28 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         self._trajectory[:, 1] *= field_half_width
 
         # This part is a plus, it allows to see the robot moving
-        for i, action in enumerate(actions):
-            self._trajectory_idx = i
-            robot = self.frame.robots_blue[0]
-            robot_pos = np.array([robot.x, robot.y])
-            robot_to_action = np.linalg.norm(robot_pos - self._trajectory[i])
-            while robot_to_action > DIST_TOLERANCE:
-                with_angle = np.array([action[0], action[1], 0, 0])
-                commands = self._get_commands(with_angle)
-                self.rsim.send_commands(commands)
-                self.sent_commands = commands
-
-                self.last_frame = self.frame
-                self.frame = self.rsim.get_frame()
-
+        if self.render_mode == "human":
+            for i, action in enumerate(actions):
+                self._trajectory_idx = i
                 robot = self.frame.robots_blue[0]
                 robot_pos = np.array([robot.x, robot.y])
                 robot_to_action = np.linalg.norm(robot_pos - self._trajectory[i])
-                if self.render_mode == "human":
-                    self.render()
+                while robot_to_action > DIST_TOLERANCE:
+                    with_angle = np.array([action[0], action[1], 0, 0])
+                    commands = self._get_commands(with_angle)
+                    self.rsim.send_commands(commands)
+                    self.sent_commands = commands
 
+                    self.last_frame = self.frame
+                    self.frame = self.rsim.get_frame()
+
+                    robot = self.frame.robots_blue[0]
+                    robot_pos = np.array([robot.x, robot.y])
+                    robot_to_action = np.linalg.norm(robot_pos - self._trajectory[i])
+                    self.render()
+        if self.render_mode != "human":
+            self.frame.robots_blue[0].x = self._trajectory[-1][0]
+            self.frame.robots_blue[0].y = self._trajectory[-1][1]
         reward, done = self._calculate_reward_and_done()
         observation = self._frame_to_observations()
 
