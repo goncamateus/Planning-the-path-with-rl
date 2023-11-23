@@ -18,7 +18,7 @@
         "caps_epsilon": 0.05
     },
 
-    "Obstacles-v0":{
+    "Obstacle-v0":{
         "num_envs": 16,
         "total_timesteps": 500000,
         "autotune": false,
