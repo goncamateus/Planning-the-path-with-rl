@@ -4,12 +4,12 @@
         "total_timesteps": 150000
     },
 
-    "Enhanced-v1":{
+    "Enhanced-v0":{
         "num_envs": 16,
         "total_timesteps": 150000
     },
 
-    "Enhanced-v2":{
+    "Enhanced-v1":{
         "num_envs": 16,
         "total_timesteps": 150000,
         "autotune": false,
