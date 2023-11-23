@@ -39,13 +39,13 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         distances = np.linalg.norm(trajectory - target, axis=1)
         my_arr = np.zeros(len(distances - 1))
         for i in range(len(distances) - 1):
-            transition = distances[i] - distances[i + 1]
-            if transition < -DIST_TOLERANCE:
+            transition = distances[i + 1] - distances[i]
+            if transition > 0:
                 if i == 0:
                     my_arr[i] = 1
                 else:
                     my_arr[i] = my_arr[i - 1] + 1
-            if transition >= DIST_TOLERANCE:
+            if transition <= 0:
                 if i == 0:
                     my_arr[i] = -1
                 else:
@@ -53,15 +53,6 @@ class TrajectoryEnv(SSLPathPlanningEnv):
                         my_arr[i] = -1
                     else:
                         my_arr[i] = my_arr[i - 1] - 1
-
-            if transition >= -DIST_TOLERANCE and transition < DIST_TOLERANCE:
-                if i == 0:
-                    my_arr[i] = 0
-                else:
-                    if my_arr[i - 1] <= 0:
-                        my_arr[i] = my_arr[i - 1]
-                    else:
-                        my_arr[i] = 0
         return np.sum(my_arr) / np.arange(self._trajectory_size - 1).sum()
 
     def _calculate_reward_continuity(self, trajectory: np.ndarray):
