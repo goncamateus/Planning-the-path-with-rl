@@ -27,3 +27,9 @@ register(
     kwargs={"n_robots_yellow": 1},
     max_episode_steps=75,
 )
+
+register(
+    id="Trajectory-v0",
+    entry_point="envs.trajectory:TrajectoryEnv",
+    max_episode_steps=1,
+)

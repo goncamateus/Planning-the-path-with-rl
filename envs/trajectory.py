@@ -15,15 +15,17 @@ from envs.enhanced import DIST_TOLERANCE, SSLPathPlanningEnv
 class TrajectoryEnv(SSLPathPlanningEnv):
     def __init__(
         self,
-        field_type=1,
+        field_type=2,
         n_robots_yellow=0,
         render_mode=None,
     ):
         super().__init__(field_type, 1, n_robots_yellow, render_mode)
-
+        self._trajectory_size = 40
         self._target = np.array([0, 0])
         self._trajectory = []
-        self._trajectory_size = 40
+        self.action_space = gym.spaces.Box(
+            low=-1, high=1, shape=(self._trajectory_size, 2), dtype=np.float32
+        )
         self.reward_info = {
             "reward_dist": 0,
             "reward_action_var": 0,
@@ -31,7 +33,6 @@ class TrajectoryEnv(SSLPathPlanningEnv):
             "reward_objective": 0,
             "reward_total": 0,
         }
-        self.all_frames = []
 
     def _calculate_reward_dist(self, trajectory: np.ndarray, target: np.ndarray):
         distances = np.linalg.norm(trajectory - target, axis=1)
@@ -96,7 +97,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
 
         return reward, True
 
-    def step(self, actions):
+    def step(self, actions: np.ndarray):
         field_half_length = self.field.length / 2  # x
         field_half_width = self.field.width / 2  # y
         self._trajectory = actions.copy()
@@ -105,7 +106,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         reward, done = self._calculate_reward_and_done()
 
         # This part is a plus, it allows to see the robot moving
-        for action in range(actions):
+        for action in actions:
             robot = self.frame.robots_blue[0]
             robot_pos = np.array([robot.x, robot.y])
             robot_to_action = np.linalg.norm(robot_pos - action)
@@ -116,56 +117,45 @@ class TrajectoryEnv(SSLPathPlanningEnv):
 
                 self.last_frame = self.frame
                 self.frame = self.rsim.get_frame()
-                self.all_frames.append(self.frame)
+                if self.render_mode == "human":
+                    self.render()
 
                 robot = self.frame.robots_blue[0]
                 robot_pos = np.array([robot.x, robot.y])
                 robot_to_action = np.linalg.norm(robot_pos - action)
 
         observation = self._frame_to_observations()
-        if self.render_mode == "human":
-            self.render()
 
         return observation, reward, done, False, self.reward_info
 
-    def render(self) -> None:
-        """
-        Renders the game depending on
-        ball's and players' positions.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
-        """
-
-        if self.window_surface is None:
-            pygame.init()
-
-            if self.render_mode == "human":
-                pygame.display.init()
-                pygame.display.set_caption("SSL Environment")
-                self.window_surface = pygame.display.set_mode(self.window_size)
-            elif self.render_mode == "rgb_array":
-                self.window_surface = pygame.Surface(self.window_size)
-
-        assert (
-            self.window_surface is not None
-        ), "Something went wrong with pygame. This should never happen."
-
-        if self.clock is None:
-            self.clock = pygame.time.Clock()
-        self._render()
-        if self.render_mode == "human":
-            pygame.event.pump()
-            pygame.display.update()
-            self.clock.tick(self.metadata["render_fps"])
-        elif self.render_mode == "rgb_array":
-            return np.transpose(
-                np.array(pygame.surfarray.pixels3d(self.window_surface)), axes=(1, 0, 2)
+    def _render(self):
+        def pos_transform(pos_x, pos_y):
+            return (
+                int(pos_x * self.field_renderer.scale + self.field_renderer.center_x),
+                int(pos_y * self.field_renderer.scale + self.field_renderer.center_y),
             )
-        
+
+        super()._render()
+        for action in self._trajectory:
+            pos_x, pos_y = pos_transform(action[0], action[1])
+            pos = Point2D(x=pos_x, y=pos_y)
+            self.draw_target(
+                self.window_surface,
+                pos_transform,
+                pos,
+                self.target_angle,
+                self.action_color,
+            )
+
+    def _get_initial_positions_frame(self):
+        pos_frame = super()._get_initial_positions_frame()
+        self.reward_info = {
+            "reward_dist": 0,
+            "reward_action_var": 0,
+            "reward_continuity": 0,
+            "reward_objective": 0,
+            "reward_total": 0,
+        }
+        self._trajectory = []
+        self._target = np.array([self.target_point.x, self.target_point.y])
+        return pos_frame
