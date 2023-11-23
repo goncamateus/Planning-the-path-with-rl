@@ -19,12 +19,12 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         render_mode=None,
     ):
         super().__init__(field_type, n_robots_yellow, 1, render_mode)
-        self._trajectory_size = 5
+        self._trajectory_size = 6
         self._target = np.array([0, 0])
         self._trajectory = []
         self._trajectory_idx = 0
         self.action_space = gym.spaces.Box(
-            low=-1, high=1, shape=(self._trajectory_size * 2,), dtype=np.float32
+            low=-1, high=1, shape=((self._trajectory_size - 1) * 2,), dtype=np.float32
         )
 
         self.reward_info = {
@@ -52,14 +52,14 @@ class TrajectoryEnv(SSLPathPlanningEnv):
                         my_arr[i] = -1
                     else:
                         my_arr[i] = my_arr[i - 1] - 1
-        return np.sum(my_arr) / np.arange(self._trajectory_size - 1).sum()
+        return np.sum(my_arr) / np.arange(self._trajectory_size).sum()
 
     def _calculate_reward_continuity(self, trajectory: np.ndarray):
         vectors = trajectory[1:] - trajectory[:-1]
         normed_vectors = vectors / np.linalg.norm(vectors, axis=1)[:, None]
         pairwise_dot = np.einsum("ij,ij->i", normed_vectors[:-1], normed_vectors[1:])
         dot_in_range = (pairwise_dot > 0).astype(int)
-        return np.sum(dot_in_range) / np.arange(self._trajectory_size - 1).sum()
+        return np.sum(dot_in_range) / self._trajectory_size
 
     def _calculate_reward_objective(self, trajectory: np.ndarray, target: np.ndarray):
         dist_to_target = np.linalg.norm(trajectory[-1] - target)
@@ -89,12 +89,15 @@ class TrajectoryEnv(SSLPathPlanningEnv):
 
     def step(self, actions: np.ndarray):
         actions = actions.reshape(-1, 2)
+        robot = np.array([self.frame.robots_blue[0].x, self.frame.robots_blue[0].y])
+        norm_robot = robot / np.array([self.field.length / 2, self.field.width / 2])
+        actions = np.concatenate([[norm_robot], actions], axis=0)
         field_half_length = self.field.length / 2  # x
         field_half_width = self.field.width / 2  # y
         self._trajectory = actions.copy()
         self._trajectory[:, 0] *= field_half_length
         self._trajectory[:, 1] *= field_half_width
-
+        reward, done = self._calculate_reward_and_done()
         # This part is a plus, it allows to see the robot moving
         if self.render_mode == "human":
             for i, action in enumerate(actions):
@@ -118,7 +121,6 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         if self.render_mode != "human":
             self.frame.robots_blue[0].x = self._trajectory[-1][0]
             self.frame.robots_blue[0].y = self._trajectory[-1][1]
-        reward, done = self._calculate_reward_and_done()
         observation = self._frame_to_observations()
 
         return observation, reward, done, False, self.reward_info
