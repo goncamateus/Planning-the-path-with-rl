@@ -25,5 +25,10 @@
         "lambda_temporal": 1,
         "lambda_spacial": 5,
         "caps_epsilon": 0.05
+    },
+
+    "Trajectory-v0":{
+        "num_envs": 120,
+        "total_timesteps": 1000000
     }
 }
