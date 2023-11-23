@@ -39,13 +39,12 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         distances = np.linalg.norm(trajectory - target, axis=1)
         my_arr = np.zeros(len(distances - 1))
         for i in range(len(distances) - 1):
-            transition = distances[i + 1] - distances[i]
-            if transition > 0:
+            if distances[i] > distances[i + 1]:
                 if i == 0:
                     my_arr[i] = 1
                 else:
                     my_arr[i] = my_arr[i - 1] + 1
-            if transition <= 0:
+            else:
                 if i == 0:
                     my_arr[i] = -1
                 else:
@@ -65,8 +64,6 @@ class TrajectoryEnv(SSLPathPlanningEnv):
     def _calculate_reward_objective(self, trajectory: np.ndarray, target: np.ndarray):
         dist_to_target = np.linalg.norm(trajectory[-1] - target)
         reward = -dist_to_target if dist_to_target > DIST_TOLERANCE else 10
-        if reward == 10:
-            print(colorize("GOAL!", "green", bold=True, highlight=True))
         return reward
 
     def _calculate_action_var(self, trajectory: np.ndarray):
