@@ -19,47 +19,32 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         render_mode=None,
     ):
         super().__init__(field_type, n_robots_yellow, 1, render_mode)
-        self._trajectory_size = 6
+        self._trajectory_size = 7
         self._target = np.array([0, 0])
         self._trajectory = []
         self._trajectory_idx = 0
         self.action_space = gym.spaces.Box(
-            low=-1, high=1, shape=((self._trajectory_size - 1) * 2,), dtype=np.float32
+            low=-1, high=1, shape=((self._trajectory_size - 2) * 2,), dtype=np.float32
         )
 
         self.reward_info = {
             "reward_dist": 0,
             "reward_action_var": 0,
             "reward_continuity": 0,
-            "reward_objective": 0,
             "reward_total": 0,
         }
 
     def _calculate_reward_dist(self, trajectory: np.ndarray, target: np.ndarray):
         distances = np.linalg.norm(trajectory - target, axis=1)
-        my_arr = np.zeros(len(distances - 1))
-        for i in range(len(distances) - 1):
-            if distances[i] > distances[i + 1]:
-                if i == 0:
-                    my_arr[i] = 1
-                else:
-                    my_arr[i] = my_arr[i - 1] + 1
-            else:
-                if i == 0:
-                    my_arr[i] = -1
-                else:
-                    if my_arr[i - 1] >= 0:
-                        my_arr[i] = -1
-                    else:
-                        my_arr[i] = my_arr[i - 1] - 1
-        return np.sum(my_arr) / np.arange(self._trajectory_size).sum()
+        towards_target = (distances[:-1] > distances[1:]).astype(int)
+        return np.mean(towards_target)
 
     def _calculate_reward_continuity(self, trajectory: np.ndarray):
         vectors = trajectory[1:] - trajectory[:-1]
         normed_vectors = vectors / np.linalg.norm(vectors, axis=1)[:, None]
         pairwise_dot = np.einsum("ij,ij->i", normed_vectors[:-1], normed_vectors[1:])
-        dot_in_range = (pairwise_dot > 0).astype(int)
-        return np.sum(dot_in_range) / self._trajectory_size
+        dot_in_range = (pairwise_dot > np.cos(np.pi / 6)).astype(int)
+        return np.mean(dot_in_range)
 
     def _calculate_reward_objective(self, trajectory: np.ndarray, target: np.ndarray):
         dist_to_target = np.linalg.norm(trajectory[-1] - target)
@@ -73,16 +58,12 @@ class TrajectoryEnv(SSLPathPlanningEnv):
     def _calculate_reward_and_done(self):
         reward_dist = self._calculate_reward_dist(self._trajectory, self._target)
         reward_continuity = self._calculate_reward_continuity(self._trajectory)
-        reward_objective = self._calculate_reward_objective(
-            self._trajectory, self._target
-        )
         action_var = self._calculate_action_var(self._trajectory)
         self.reward_info["reward_dist"] += reward_dist
         self.reward_info["reward_continuity"] += reward_continuity
-        self.reward_info["reward_objective"] += reward_objective
         self.reward_info["reward_action_var"] += action_var
 
-        reward = reward_dist + reward_continuity + reward_objective
+        reward = reward_dist * 0.5 + reward_continuity * 0.5
         self.reward_info["reward_total"] += reward
 
         return reward, True
@@ -91,7 +72,10 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         actions = actions.reshape(-1, 2)
         robot = np.array([self.frame.robots_blue[0].x, self.frame.robots_blue[0].y])
         norm_robot = robot / np.array([self.field.length / 2, self.field.width / 2])
-        actions = np.concatenate([[norm_robot], actions], axis=0)
+        norm_target = self._target / np.array(
+            [self.field.length / 2, self.field.width / 2]
+        )
+        actions = np.concatenate([[norm_robot], actions, [norm_target]], axis=0)
         field_half_length = self.field.length / 2  # x
         field_half_width = self.field.width / 2  # y
         self._trajectory = actions.copy()
@@ -125,27 +109,10 @@ class TrajectoryEnv(SSLPathPlanningEnv):
 
         return observation, reward, done, False, self.reward_info
 
-    def draw_arrow(
-        self,
-        surface: pygame.Surface,
-        start: pygame.Vector2,
-        end: pygame.Vector2,
-        color: pygame.Color,
-        body_width: int = 1,
-        head_width: int = 10,
-        head_height: int = 10,
-    ):
-        # Draw an arrow between start and end with the arrow head at the end.
-
-        # Args:
-        #     surface (pygame.Surface): The surface to draw on
-        #     start (pygame.Vector2): Start position
-        #     end (pygame.Vector2): End position
-        #     color (pygame.Color): Color of the arrow
-        #     body_width (int, optional): Defaults to 2.
-        #     head_width (int, optional): Defaults to 4.
-        #     head_height (float, optional): Defaults to 2.
-
+    def draw_arrow(self, surface, start, end):
+        body_width = 1
+        head_width = 10
+        head_height = 10
         arrow = start - end
         angle = arrow.angle_to(pygame.Vector2(0, -1))
         body_length = arrow.length() - head_height
@@ -182,7 +149,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
                 body_verts[i] += translation
                 body_verts[i] += start
 
-            pygame.draw.polygon(surface, color, body_verts)
+            pygame.draw.polygon(surface, COLORS["BLACK"], body_verts)
 
     def _render(self):
         def pos_transform(pos_x, pos_y):
@@ -216,7 +183,6 @@ class TrajectoryEnv(SSLPathPlanningEnv):
                     self.window_surface,
                     pygame.Vector2(pos_x, pos_y),
                     pygame.Vector2(next_pos_x, next_pos_y),
-                    COLORS["BLACK"],
                 )
 
     def _get_initial_positions_frame(self):
@@ -225,7 +191,6 @@ class TrajectoryEnv(SSLPathPlanningEnv):
             "reward_dist": 0,
             "reward_action_var": 0,
             "reward_continuity": 0,
-            "reward_objective": 0,
             "reward_total": 0,
         }
         self._trajectory = [[pos_frame.robots_blue[0].x, pos_frame.robots_blue[0].y]]
