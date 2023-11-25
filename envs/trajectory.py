@@ -49,7 +49,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         normed_vectors = vectors / np.linalg.norm(vectors, axis=1)[:, None]
         pairwise_dot = np.einsum("ij,ij->i", normed_vectors[:-1], normed_vectors[1:])
         dot_in_range = (pairwise_dot > np.cos(np.pi / 6)).astype(int)
-        return np.mean(dot_in_range)
+        return np.sum(dot_in_range)
 
     def _calculate_reward_objective(self, trajectory: np.ndarray, target: np.ndarray):
         dist_to_target = np.linalg.norm(trajectory[-1] - target)
@@ -68,7 +68,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         self.reward_info["reward_continuity"] += reward_continuity
         self.reward_info["reward_action_var"] += action_var
 
-        reward = reward_move * 0.5 + reward_continuity * 0.5
+        reward = reward_move + reward_continuity
         self.reward_info["reward_total"] += reward
 
         return reward, True
