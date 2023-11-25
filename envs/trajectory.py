@@ -41,13 +41,12 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         trajectory_vectors = trajectory_vectors / trajectory_vectors_norm[:, None]
 
         # Calculate target vectors and their norms
-        target_vectors = trajectory[:-2] - target
+        target_vectors = target - trajectory[:-2]
         target_vectors_norm = np.linalg.norm(target_vectors, axis=1)
         target_vectors = target_vectors / target_vectors_norm[:, None]
 
         # Calculate dot products using vectorized operations
         pairwise_dot = np.einsum("ij,ij->i", trajectory_vectors, target_vectors)
-        print(pairwise_dot)
         return np.sum(pairwise_dot)
 
     def _calculate_reward_continuity(self, trajectory: np.ndarray):
