@@ -19,7 +19,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         render_mode=None,
     ):
         super().__init__(field_type, n_robots_yellow, 1, render_mode)
-        self._trajectory_size = 7
+        self._trajectory_size = 5
         self._target = np.array([0, 0])
         self._trajectory = []
         self._trajectory_idx = 0
@@ -28,16 +28,21 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         )
 
         self.reward_info = {
-            "reward_dist": 0,
+            "reward_move": 0,
             "reward_action_var": 0,
             "reward_continuity": 0,
             "reward_total": 0,
         }
 
-    def _calculate_reward_dist(self, trajectory: np.ndarray, target: np.ndarray):
-        distances = np.linalg.norm(trajectory - target, axis=1)
-        towards_target = (distances[:-1] > distances[1:]).astype(int)
-        return np.mean(towards_target)
+    def _calculate_reward_move(self, trajectory: np.ndarray, target: np.ndarray):
+        trajectory_vectors = trajectory[1:-1] - trajectory[:-2]
+        trajectory_vectors_norm = np.linalg.norm(trajectory_vectors, axis=1)
+        target_vectors = trajectory[:-2] - target
+        target_vectors_norm = np.linalg.norm(target_vectors, axis=1)
+        pairwise_dot = np.einsum(
+            "ij,ij->i", trajectory_vectors_norm, target_vectors_norm
+        )
+        return np.sum(pairwise_dot)
 
     def _calculate_reward_continuity(self, trajectory: np.ndarray):
         vectors = trajectory[1:] - trajectory[:-1]
@@ -56,14 +61,14 @@ class TrajectoryEnv(SSLPathPlanningEnv):
         return np.sum(distances)
 
     def _calculate_reward_and_done(self):
-        reward_dist = self._calculate_reward_dist(self._trajectory, self._target)
+        reward_move = self._calculate_reward_move(self._trajectory, self._target)
         reward_continuity = self._calculate_reward_continuity(self._trajectory)
         action_var = self._calculate_action_var(self._trajectory)
-        self.reward_info["reward_dist"] += reward_dist
+        self.reward_info["reward_move"] += reward_move
         self.reward_info["reward_continuity"] += reward_continuity
         self.reward_info["reward_action_var"] += action_var
 
-        reward = reward_dist * 0.5 + reward_continuity * 0.5
+        reward = reward_move * 0.5 + reward_continuity * 0.5
         self.reward_info["reward_total"] += reward
 
         return reward, True
@@ -188,7 +193,7 @@ class TrajectoryEnv(SSLPathPlanningEnv):
     def _get_initial_positions_frame(self):
         pos_frame = super()._get_initial_positions_frame()
         self.reward_info = {
-            "reward_dist": 0,
+            "reward_move": 0,
             "reward_action_var": 0,
             "reward_continuity": 0,
             "reward_total": 0,
