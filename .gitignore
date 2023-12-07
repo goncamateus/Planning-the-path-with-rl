@@ -9,3 +9,4 @@ runs/
 *.csv
 models/
 artifacts/
+results_analysis/*.png

@@ -79,6 +79,7 @@ def plot_cpad(
     cpad_table,
     environements,
     n_steps=150000,
+    log_scale=True,
     y_ticks=[1, 10, 100],
 ):
     for environment in environements:
@@ -98,10 +99,13 @@ def plot_cpad(
         ax.plot(x, y, f"{ENV_COLORS[environement]}-", label=f"{environement}")
     ax.grid(True)
     ax.legend(loc="upper right")
-    plt.yticks(y_ticks)
-    plt.yscale("log")
+    y_label = "CPAD"
+    if log_scale:
+        plt.yticks(y_ticks)
+        plt.yscale("log")
+        y_label += " (log scale)"
     plt.xlabel("Training Steps")
-    plt.ylabel("CPAD (log scale)")
+    plt.ylabel(y_label)
     plt.gca().xaxis.set_major_formatter(formatter)
     plt.title("Cumulative Pairwise Action Distance")
     plt.show()
