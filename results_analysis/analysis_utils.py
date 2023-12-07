@@ -101,9 +101,9 @@ def plot_cpad(
     ax.legend(loc="upper right")
     y_label = "CPAD"
     if log_scale:
-        plt.yticks(y_ticks)
         plt.yscale("log")
         y_label += " (log scale)"
+    plt.yticks(y_ticks)
     plt.xlabel("Training Steps")
     plt.ylabel(y_label)
     plt.gca().xaxis.set_major_formatter(formatter)
