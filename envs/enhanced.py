@@ -48,7 +48,7 @@ class SSLPathPlanningEnv(SSLBaseEnv):
             low=-1, high=1, shape=(4,), dtype=np.float32  # hyp tg.
         )
 
-        n_obs = 6 + 7 * self.n_robots_blue + 2 * self.n_robots_yellow
+        n_obs = 6 + 7 * self.n_robots_blue + 5 * self.n_robots_yellow
         self.observation_space = gym.spaces.Box(
             low=-self.NORM_BOUNDS,
             high=self.NORM_BOUNDS,
@@ -172,12 +172,15 @@ class SSLPathPlanningEnv(SSLBaseEnv):
             # Get Frame from simulator
             self.last_frame = self.frame
             self.frame = self.rsim.get_frame()
+            # Calculate environment observation, reward and done condition
+            observation = self._frame_to_observations()
+            reward, done = self._calculate_reward_and_done()
+            if done:
+                break
+
         self.robot_path.append(
             (self.frame.robots_blue[0].x, self.frame.robots_blue[0].y)
         )
-        # Calculate environment observation, reward and done condition
-        observation = self._frame_to_observations()
-        reward, done = self._calculate_reward_and_done()
         self.last_action = action
         if self.render_mode == "human":
             self.render()

@@ -1,4 +1,7 @@
 import numpy as np
+
+from rsoccer_gym.Entities import Robot
+
 from envs.enhanced import SSLPathPlanningEnv
 
 
@@ -16,6 +19,7 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
             repeat_action=16,
             render_mode=render_mode,
         )
+        self.do_random_walk = np.random.randint(2)
 
     def _frame_to_observations(self):
         observation = list()
@@ -38,6 +42,9 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
         for i in range(self.n_robots_yellow):
             observation.append(self.norm_pos(self.frame.robots_yellow[i].x))
             observation.append(self.norm_pos(self.frame.robots_yellow[i].y))
+            observation.append(self.norm_v(self.frame.robots_yellow[i].v_x))
+            observation.append(self.norm_v(self.frame.robots_yellow[i].v_y))
+            observation.append(self.norm_w(self.frame.robots_yellow[i].v_theta))
 
         return np.array(observation, dtype=np.float32)
 
@@ -47,6 +54,8 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
         if self._check_collision():
             done = True
             reward = -1000
+        if done:
+            self.do_random_walk = np.random.randint(2)
         return reward, done
 
     def _check_collision(self):
@@ -89,3 +98,20 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
             gaussian = exponential / (std * np.sqrt(2 * np.pi))
             reward -= gaussian
         return reward
+
+    def _get_commands(self, action):
+        commands = super()._get_commands(action)
+        if self.do_random_walk:
+            yellow_commands = []
+            for i in range(self.n_robots_yellow):
+                yellow_commands.append(
+                    Robot(
+                        yellow=True,
+                        id=self.frame.robots_yellow[i].id,
+                        v_x=np.random.uniform(-0.5, 0.5),
+                        v_y=np.random.uniform(-0.5, 0.5),
+                        v_theta=np.random.uniform(-np.pi, np.pi),
+                    )
+                )
+            commands = commands + yellow_commands
+        return commands
