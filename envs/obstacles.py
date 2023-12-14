@@ -1,3 +1,4 @@
+import gymnasium
 import numpy as np
 
 from rsoccer_gym.Entities import Robot
@@ -20,6 +21,13 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
             render_mode=render_mode,
         )
         self.do_random_walk = np.random.randint(2)
+        n_obs = 6 + 7 * self.n_robots_blue + 5 * self.n_robots_yellow
+        self.observation_space = gymnasium.spaces.Box(
+            low=-self.NORM_BOUNDS,
+            high=self.NORM_BOUNDS,
+            shape=(n_obs,),
+            dtype=np.float32,
+        )
 
     def _frame_to_observations(self):
         observation = list()
@@ -108,10 +116,30 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
                     Robot(
                         yellow=True,
                         id=self.frame.robots_yellow[i].id,
-                        v_x=np.random.uniform(-0.5, 0.5),
-                        v_y=np.random.uniform(-0.5, 0.5),
+                        v_x=np.random.uniform(-2.5, 2.5),
+                        v_y=np.random.uniform(-2.5, 2.5),
                         v_theta=np.random.uniform(-np.pi, np.pi),
                     )
                 )
             commands = commands + yellow_commands
         return commands
+
+    def _get_initial_positions_frame(self):
+        pos_frame = super()._get_initial_positions_frame()
+        # Put the obstacle between the agent and the target
+        agent_pos = np.array(
+            (
+                pos_frame.robots_blue[0].x,
+                pos_frame.robots_blue[0].y,
+            )
+        )
+        target_pos = np.array(
+            (
+                self.target_point.x,
+                self.target_point.y,
+            )
+        )
+        obstacle_pos = agent_pos + (target_pos - agent_pos) / 2
+        pos_frame.robots_yellow[0].x = obstacle_pos[0]
+        pos_frame.robots_yellow[0].y = obstacle_pos[1]
+        return pos_frame

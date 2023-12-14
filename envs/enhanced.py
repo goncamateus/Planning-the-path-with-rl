@@ -48,7 +48,7 @@ class SSLPathPlanningEnv(SSLBaseEnv):
             low=-1, high=1, shape=(4,), dtype=np.float32  # hyp tg.
         )
 
-        n_obs = 6 + 7 * self.n_robots_blue + 5 * self.n_robots_yellow
+        n_obs = 6 + 7 * self.n_robots_blue
         self.observation_space = gym.spaces.Box(
             low=-self.NORM_BOUNDS,
             high=self.NORM_BOUNDS,
@@ -303,7 +303,7 @@ class SSLPathPlanningEnv(SSLBaseEnv):
             / self.max_v
         )
 
-        min_gen_dist = 1
+        min_gen_dist = 0.2
 
         places = KDTree()
         places.insert((self.target_point.x, self.target_point.y))
