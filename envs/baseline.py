@@ -29,7 +29,9 @@ DIST_TOLERANCE: float = 0.05  # m == 5 cm
 class SSLPathPlanningBaseLineEnv(SSLBaseEnv):
     """The SSL robot needs to reach the target point with a given angle"""
 
-    def __init__(self, field_type=1, n_robots_yellow=0, render_mode=None):
+    def __init__(
+        self, field_type=1, n_robots_yellow=0, render_mode=None, repeat_action=1
+    ):
         super().__init__(
             field_type=field_type,
             n_robots_blue=1,
@@ -75,6 +77,11 @@ class SSLPathPlanningBaseLineEnv(SSLBaseEnv):
         self.all_actions = []
         self.action_color = COLORS["PINK"]
         self.robot_path = []
+        self.repeat_action = repeat_action
+        FPS = 120
+        if self.repeat_action > 1:
+            FPS = np.ceil((1200 // self.repeat_action) / 10)
+        self.metadata["render_fps"] = FPS
 
         print("Environment initialized")
 
@@ -149,12 +156,30 @@ class SSLPathPlanningBaseLineEnv(SSLBaseEnv):
 
     def step(self, action):
         self.actual_action = action
-        observation, reward, terminated, truncated, _ = super().step(action)
+        for _ in range(self.repeat_action):
+            self.steps += 1
+            # Join agent action with environment actions
+            commands = self._get_commands(action)
+            # Send command to simulator
+            self.rsim.send_commands(commands)
+            self.sent_commands = commands
+
+            # Get Frame from simulator
+            self.last_frame = self.frame
+            self.frame = self.rsim.get_frame()
+            # Calculate environment observation, reward and done condition
+            observation = self._frame_to_observations()
+            reward, done = self._calculate_reward_and_done()
+            if done:
+                break
+
         self.robot_path.append(
             (self.frame.robots_blue[0].x, self.frame.robots_blue[0].y)
         )
         self.last_action = action
-        return observation, reward, terminated, truncated, self.reward_info
+        if self.render_mode == "human":
+            self.render()
+        return observation, reward, done, False, self.reward_info
 
     def _dist_reward(self):
         robot = self.frame.robots_blue[0]

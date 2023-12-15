@@ -1,7 +1,7 @@
 import gymnasium as gym
 import envs
 
-env = gym.make("Obstacle-v0", render_mode="human")
+env = gym.make("Baseline-v1", render_mode="human")
 env.reset()
 d = t = False
 while not(d or t):
