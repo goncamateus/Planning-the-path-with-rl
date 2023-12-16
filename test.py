@@ -5,8 +5,6 @@ import numpy as np
 import torch
 import pandas as pd
 
-from pyvirtualdisplay import Display
-
 from methods.sac import GaussianPolicy
 
 from utils.experiment import strtobool
