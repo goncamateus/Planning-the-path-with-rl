@@ -47,6 +47,9 @@ def main(env_id, caps):
             "Episode Length (seconds)": info["reward_steps"] * 0.025,
             "Cumulative Pairwise Action Distance": info["reward_action_var"],
         }
+        if "Obstacle" in env_id:
+            hit = int(reward == -1000)
+            log[f"Hit Obstacle"] = hit
         logs.append(log)
     env.close()
     df = pd.DataFrame(logs)
