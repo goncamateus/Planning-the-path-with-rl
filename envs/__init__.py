@@ -32,7 +32,7 @@ register(
     id="Obstacle-v0",
     entry_point="envs.obstacles:SSLPathPlanningMediumEnv",
     kwargs={"n_robots_yellow": 1, "repeat_action": 1},
-    max_episode_steps=71200,
+    max_episode_steps=1200,
 )
 
 register(
