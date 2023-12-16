@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import seaborn as sns
+
 
 ENV_COLORS = {
     "Baseline": "y",
@@ -108,4 +110,50 @@ def plot_cpad(
     plt.ylabel(y_label)
     plt.gca().xaxis.set_major_formatter(formatter)
     plt.title("Cumulative Pairwise Action Distance")
+    plt.show()
+
+
+def box_plot_steps(data_frames, colors, name_to_save="0"):
+    fig, ax = plt.subplots()
+    plt.grid(True)
+    ax2 = ax.twinx()
+    ax.set_ylabel("Steps", weight="bold", color="b")
+    ax2.set_ylabel("Seconds", weight="bold", color="r")
+    # ax.set_xlabel("Environment")
+    ax.set_title("Episode Length", weight="bold", fontsize=16)
+    ax.set_ylim(0, 1300)
+    ax2.set_ylim(0, 1300 * 0.025)
+    for df in data_frames:
+        sns.boxplot(
+            data=df,
+            x="Environment",
+            y="Episode Length",
+            ax=ax,
+            color=colors[df["Environment"].iloc[0]],
+        )
+    for label in ax.get_xticklabels():
+        label.set_fontweight("bold")
+    ax.set_xlabel("")
+    plt.savefig(f"epi_length_{name_to_save}.png")
+    plt.show()
+
+
+def box_plot_cpad(data_frames, colors, name_to_save="0"):
+    fig, ax = plt.subplots()
+    ax.set_ylabel("CPAD", weight="bold")
+    # ax.set_xlabel("Environment")
+    ax.set_title("Cumulative Pairwise Action Distance", weight="bold", fontsize=16)
+    for df in data_frames:
+        sns.boxplot(
+            data=df,
+            x="Environment",
+            y="Cumulative Pairwise Action Distance",
+            ax=ax,
+            color=colors[df["Environment"].iloc[0]],
+        )
+    for label in ax.get_xticklabels():
+        label.set_fontweight("bold")
+    ax.set_xlabel("")
+    plt.grid(True)
+    plt.savefig(f"cpad_{name_to_save}.png")
     plt.show()

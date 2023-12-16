@@ -9,7 +9,7 @@ from pyvirtualdisplay import Display
 
 from methods.sac import GaussianPolicy
 
-from distutils.util import strtobool
+from utils.experiment import strtobool
 
 
 def load_model(model_path):
