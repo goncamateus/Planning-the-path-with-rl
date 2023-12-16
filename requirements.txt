@@ -3,3 +3,4 @@ git+https://github.com/goncamateus/rSoccer.git@dev#egg=rsoccer_gym
 wandb>=0.16.0
 pyvirtualdisplay>=3.0
 moviepy >= 1.0.0
+pandas >= 2.1.4
