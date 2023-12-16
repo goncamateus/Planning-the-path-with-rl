@@ -18,7 +18,7 @@ def load_model(model_path):
 def main(env_id, caps):
     env = gym.make(env_id, render_mode="rgb_array")
     path = env_id + "-caps" if caps else env_id
-    state_dict = load_model(f"models/{path}/actor.pt")
+    state_dict = load_model(f"test_models/{path}/actor.pt")
     num_inputs = np.array(env.observation_space.shape).prod()
     num_actions = np.array(env.action_space.shape).prod()
     actor = GaussianPolicy(
@@ -34,7 +34,7 @@ def main(env_id, caps):
     actor.eval()
     actor.to("cpu")
     logs = []
-    for _ in range(100):
+    for _ in range(1000):
         obs, _ = env.reset()
         done = False
         trunc = False
