@@ -12,13 +12,14 @@ class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
     def __init__(
         self,
         n_robots_yellow=1,
+        repeat_action=16,
         render_mode=None,
     ):
         super().__init__(
             n_robots_yellow=n_robots_yellow,
             field_type=2,
-            repeat_action=16,
             render_mode=render_mode,
+            repeat_action=repeat_action,
         )
         self.do_random_walk = np.random.randint(2)
         n_obs = 6 + 7 * self.n_robots_blue + 5 * self.n_robots_yellow
