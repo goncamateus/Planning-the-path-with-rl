@@ -1,0 +1,77 @@
+Baseline:
+  PURE:
+    gym_id: Baseline-v0
+    num_envs: 16
+    total_timesteps: 150000
+  FRAMESKIP:
+    gym_id: Baseline-v1
+    num_envs: 16
+    total_timesteps: 150000
+  CAPS:
+    gym_id: Baseline-v0
+    num_envs: 16
+    total_timesteps: 150000
+    autotune: True
+    lambda_temporal: 1
+    lambda_spacial: 5
+    caps_epsilon: 0.05
+  FSCAPS:
+    gym_id: Baseline-v1
+    num_envs: 16
+    total_timesteps: 150000
+    autotune: True
+    lambda_temporal: 1
+    lambda_spacial: 5
+    caps_epsilon: 0.05
+    
+Enhanced:
+  PURE:
+    gym_id: Enhanced-v0
+    num_envs: 16
+    total_timesteps: 150000
+  frameskip:
+    gym_id: Enhanced-v1
+    num_envs: 16
+    total_timesteps: 150000
+  CAPS:
+    gym_id: Enhanced-v0
+    num_envs: 16
+    total_timesteps: 150000
+    autotune: True
+    lambda_temporal: 1
+    lambda_spacial: 5
+    caps_epsilon: 0.05
+  FSCAPS:
+    gym_id: Enhanced-v1
+    num_envs: 16
+    total_timesteps: 150000
+    autotune: True
+    lambda_temporal: 1
+    lambda_spacial: 5
+    caps_epsilon: 0.05
+
+Obstacle:
+  PURE:
+    gym_id: Obstacle-v0
+    num_envs: 16
+    total_timesteps: 150000
+  frameskip:
+    gym_id: Obstacle-v1
+    num_envs: 16
+    total_timesteps: 150000
+  CAPS:
+    gym_id: Obstacle-v0
+    num_envs: 16
+    total_timesteps: 150000
+    autotune: True
+    lambda_temporal: 1
+    lambda_spacial: 5
+    caps_epsilon: 0.05
+  FSCAPS:
+    gym_id: Obstacle-v1
+    num_envs: 16
+    total_timesteps: 150000
+    autotune: True
+    lambda_temporal: 1
+    lambda_spacial: 5
+    caps_epsilon: 0.05

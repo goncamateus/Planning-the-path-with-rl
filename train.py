@@ -12,7 +12,7 @@ import envs
 from pyvirtualdisplay import Display
 
 from methods.sac import SAC
-from utils.experiment import make_env
+from utils.experiment import get_experiment, make_env
 from utils.experiment import parse_args
 from utils.experiment import setup_run
 
@@ -88,14 +88,15 @@ def train(args, exp_name, wandb_run, artifact):
     envs.close()
 
 
-def main(args):
-    exp_name = f"{args.gym_id}_{int(time.time())}"
+def main(params):
+    exp_name = f"{params.env}-{params.setup}_{int(time.time())}"
     _display = Display(visible=0, size=(1400, 900))
     _display.start()
-    wandb_run, artifact = setup_run(exp_name, args)
-    train(args, exp_name, wandb_run, artifact)
+    wandb_run, artifact = setup_run(exp_name, params)
+    train(params, exp_name, wandb_run, artifact)
 
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args)
+    params = get_experiment(args)
+    main(params)

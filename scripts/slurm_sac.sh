@@ -11,5 +11,7 @@
 module load Python3.10 Xvfb freeglut glew
 source $HOME/doc/$1/bin/activate
 which python
+cd $HOME/doc/Planning-the-path-with-rl
+
 # Run the script
 python train_sac.py --cuda --gym-id $2 --track --capture-video

@@ -6,7 +6,7 @@ from rsoccer_gym.Entities import Robot
 from envs.enhanced import SSLPathPlanningEnv
 
 
-class SSLPathPlanningMediumEnv(SSLPathPlanningEnv):
+class ObstacleEnv(SSLPathPlanningEnv):
     """The SSL robot needs to reach the target point with a given angle"""
 
     def __init__(

@@ -11,5 +11,5 @@ module load Python3.10
 python -m venv $HOME/doc/$ENV_NAME
 source $HOME/doc/$ENV_NAME/bin/activate
 which python
-pip install -r requirements.txt
+pip install -r ../requirements.txt
 pip list
