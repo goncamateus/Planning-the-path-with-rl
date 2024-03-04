@@ -11,14 +11,14 @@ from utils.experiment import strtobool
 
 
 def load_model(model_path):
-    model = torch.load(model_path)
+    model = torch.load(model_path, map_location="cpu")
     return model
 
 
 def main(env_id, caps):
     env = gym.make(env_id, render_mode="rgb_array")
     path = env_id + "-caps" if caps else env_id
-    state_dict = load_model(f"test_models/{path}/actor.pt")
+    state_dict = load_model(f"trained_models/{path}/actor.pt")
     num_inputs = np.array(env.observation_space.shape).prod()
     num_actions = np.array(env.action_space.shape).prod()
     actor = GaussianPolicy(
