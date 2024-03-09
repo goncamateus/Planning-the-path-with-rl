@@ -29,6 +29,8 @@ def jit_model(env_id, caps):
         epsilon=1e-6,
         action_space=env.action_space,
     )
+    print(f"Action scale: {actor.action_scale}")
+    print(f"Action bias: {actor.action_bias}")
     actor.load_state_dict(state_dict)
     actor.eval()
     actor.to("cpu")
