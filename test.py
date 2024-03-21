@@ -16,7 +16,7 @@ def load_model(model_path):
 
 
 def main(env_id, caps):
-    env = gym.make(env_id, render_mode="rgb_array")
+    env = gym.make(env_id, render_mode="human")
     path = env_id + "-caps" if caps else env_id
     state_dict = load_model(f"trained_models/{path}/actor.pt")
     num_inputs = np.array(env.observation_space.shape).prod()
