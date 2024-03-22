@@ -391,8 +391,8 @@ class SSLPathPlanningEnv(SSLBaseEnv):
                 self.action_color,
             )
         # Draw path
-        my_path = [pos_transform(*p) for p in self.robot_path]
-        pygame.draw.lines(self.window_surface, COLORS["RED"], False, my_path, 1)
+        # my_path = [pos_transform(*p) for p in self.robot_path]
+        # pygame.draw.lines(self.window_surface, COLORS["RED"], False, my_path, 1)
 
 
 class TestEnv(SSLPathPlanningEnv):
