@@ -43,7 +43,13 @@ register(
 )
 
 register(
-    id="Trajectory-v0",
-    entry_point="envs.trajectory:TrajectoryEnv",
-    max_episode_steps=1,
+    id="Test-v0",
+    entry_point="envs.enhanced:TestEnv",
+    max_episode_steps=1200,
+)
+
+register(
+    id="TestObstacle-v0",
+    entry_point="envs.obstacles:TestObstacleEnv",
+    max_episode_steps=1200,
 )

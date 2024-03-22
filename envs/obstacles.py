@@ -1,9 +1,15 @@
 import gymnasium
 import numpy as np
 
-from rsoccer_gym.Entities import Robot
+from rsoccer_gym.Entities import Robot, Frame, Ball
 
-from envs.enhanced import SSLPathPlanningEnv
+from envs.enhanced import (
+    SSLPathPlanningEnv,
+    SPEED_MIN_TOLERANCE,
+    SPEED_MAX_TOLERANCE,
+    Point2D,
+    KDTree,
+)
 
 
 class ObstacleEnv(SSLPathPlanningEnv):
@@ -127,6 +133,78 @@ class ObstacleEnv(SSLPathPlanningEnv):
 
     def _get_initial_positions_frame(self):
         pos_frame = super()._get_initial_positions_frame()
+        # Put the obstacle between the agent and the target
+        agent_pos = np.array(
+            (
+                pos_frame.robots_blue[0].x,
+                pos_frame.robots_blue[0].y,
+            )
+        )
+        target_pos = np.array(
+            (
+                self.target_point.x,
+                self.target_point.y,
+            )
+        )
+        obstacle_pos = agent_pos + (target_pos - agent_pos) / 2
+        pos_frame.robots_yellow[0].x = obstacle_pos[0]
+        pos_frame.robots_yellow[0].y = obstacle_pos[1]
+        return pos_frame
+
+
+class TestObstacleEnv(ObstacleEnv):
+
+    def _get_initial_positions_frame(self):
+        pos_frame: Frame = Frame()
+
+        pos_frame.ball = Ball(x=-4, y=-2)
+
+        self.target_point = Point2D(x=2, y=0)
+        self.target_angle = np.deg2rad(0)
+        self.target_velocity = Point2D(x=0, y=0)
+
+        # Adjust speed tolerance according to target velocity
+        target_speed_norm = np.sqrt(
+            self.target_velocity.x**2 + self.target_velocity.y**2
+        )
+        self.SPEED_TOLERANCE = (
+            SPEED_MIN_TOLERANCE
+            + (SPEED_MAX_TOLERANCE - SPEED_MIN_TOLERANCE)
+            * target_speed_norm
+            / self.max_v
+        )
+
+        places = KDTree()
+        places.insert((self.target_point.x, self.target_point.y))
+        places.insert((pos_frame.ball.x, pos_frame.ball.y))
+
+        for i in range(self.n_robots_blue):
+            pos = (2, -2)
+            places.insert(pos)
+            pos_frame.robots_blue[i] = Robot(
+                id=i, yellow=False, x=pos[0], y=pos[1], theta=270
+            )
+
+        for i in range(self.n_robots_yellow):
+            pos = (2, -1)
+            places.insert(pos)
+            pos_frame.robots_yellow[i] = Robot(
+                id=i, yellow=True, x=pos[0], y=pos[1], theta=270
+            )
+        self.last_action = None
+        self.last_dist_reward = 0
+        self.last_angle_reward = 0
+        self.last_speed_reward = 0
+        self.all_actions = []
+        self.reward_info = {
+            "reward_dist": 0,
+            "reward_angle": 0,
+            "reward_action_var": 0,
+            "reward_objective": 0,
+            "reward_total": 0,
+            "reward_steps": 0,
+        }
+        self.robot_path = [(pos_frame.robots_blue[0].x, pos_frame.robots_blue[0].y)] * 2
         # Put the obstacle between the agent and the target
         agent_pos = np.array(
             (
