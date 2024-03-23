@@ -49,6 +49,13 @@ register(
 )
 
 register(
+    id="Test-v1",
+    entry_point="envs.enhanced:TestEnv",
+    kwargs={"field_type": 2, "n_robots_yellow": 0, "repeat_action": 16},
+    max_episode_steps=75,
+)
+
+register(
     id="TestObstacle-v0",
     entry_point="envs.obstacles:TestObstacleEnv",
     max_episode_steps=1200,
