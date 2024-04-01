@@ -18,22 +18,27 @@ from utils.experiment import setup_run
 
 
 def train(args, exp_name, wandb_run, artifact):
-    envs = gym.vector.AsyncVectorEnv(
+    environments = gym.vector.AsyncVectorEnv(
         [make_env(args, i, exp_name) for i in range(args.num_envs)]
     )
-    agent = SAC(args, envs.single_observation_space, envs.single_action_space)
+    agent = SAC(
+        args, environments.single_observation_space, environments.single_action_space
+    )
 
     start_time = time.time()
-    obs, _ = envs.reset()
+    obs, _ = environments.reset()
     log = {}
     for global_step in range(args.total_timesteps):
         if global_step < args.learning_starts:
             actions = np.array(
-                [envs.single_action_space.sample() for _ in range(args.num_envs)]
+                [
+                    environments.single_action_space.sample()
+                    for _ in range(args.num_envs)
+                ]
             )
         else:
             actions = agent.get_action(obs)
-        next_obs, rewards, terminations, truncations, infos = envs.step(actions)
+        next_obs, rewards, terminations, truncations, infos = environments.step(actions)
 
         if "final_info" in infos:
             for info in infos["final_info"]:
@@ -85,7 +90,7 @@ def train(args, exp_name, wandb_run, artifact):
 
     artifact.add_file(f"models/{exp_name}/actor.pt")
     wandb_run.log_artifact(artifact)
-    envs.close()
+    environments.close()
 
 
 def main(params):
