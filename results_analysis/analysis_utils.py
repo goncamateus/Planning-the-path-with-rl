@@ -34,12 +34,12 @@ def get_table(df_crude, environments, var):
 
 def plot_steps(
     steps_table,
-    environements,
+    environments,
     n_steps=150000,
     max_steps=1200,
     max_time=30,
 ):
-    for environment in environements:
+    for environment in environments:
         steps_table[f"{environment}-Smoothed"] = calculate_ema(
             steps_table[f"{environment} - ep_info/steps"].values, 1 - 0.999
         )
@@ -51,7 +51,7 @@ def plot_steps(
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
     formatter.set_powerlimits((-1, 1))
-    for environment in environements:
+    for environment in environments:
         x = steps_table["Step"][steps_table["Step"] <= n_steps]
         y = steps_table[f"{environment}-Smoothed"][steps_table["Step"] <= n_steps]
         y2 = y * 0.025
@@ -59,7 +59,7 @@ def plot_steps(
         (p,) = ax1.plot(x, y, f"{ENV_COLORS[environment]}-", label=f"{environment}")
         ps.append(p)
 
-        if environment == environements[0]:
+        if environment == environments[0]:
             ax2 = ax1.twinx()
             ax2.plot(x, y2, f"{ENV_COLORS[environment]}-")
             ax2.set_ylabel("Seconds", color="r")
@@ -79,12 +79,12 @@ def plot_steps(
 
 def plot_cpad(
     cpad_table,
-    environements,
+    environments,
     n_steps=150000,
     log_scale=True,
     y_ticks=[1, 10, 100],
 ):
-    for environment in environements:
+    for environment in environments:
         cpad_table[f"{environment}-Smoothed"] = calculate_ema(
             cpad_table[f"{environment} - ep_info/action_var"].values, 1 - 0.999
         )
@@ -95,7 +95,7 @@ def plot_cpad(
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
     formatter.set_powerlimits((-1, 1))
-    for environement in environements:
+    for environement in environments:
         x = cpad_table["Step"][cpad_table["Step"] <= n_steps]
         y = cpad_table[f"{environement}-Smoothed"][cpad_table["Step"] <= n_steps]
         ax.plot(x, y, f"{ENV_COLORS[environement]}-", label=f"{environement}")
